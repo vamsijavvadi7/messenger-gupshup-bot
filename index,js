@@ -1,0 +1,175 @@
+/** This is a sample code for your bot**/
+
+function MessageHandler(context, event) {
+ 
+ var msg=event.message;
+
+ 
+if(msg.toLowerCase().includes("hi")){
+             
+context.sendResponse("Hi "+event.senderobj.firstName+" !"+" Iam cable of two things.\nI can help you to know  about a movie  or I can help you to play a quiz\nIf you wanted to know about a movie you have to specify movietitle after the word movie otherwise you can have need say quiz");
+             
+}
+else if(msg.toLowerCase().includes("quiz")){
+   var  f={
+  "type": "quick_reply",
+  "content": {
+    "type": "text",
+    "text": "Choose your topic"
+  },
+  "msgid": "qr_212",
+  "options": [
+    "General Knowledge",
+    "Sports",
+    "Film",
+    "Television","Music","Computers"
+  ]
+}
+context.sendResponse(JSON.stringify(f));
+}
+else if(msg.toLowerCase().includes("movie")) {
+    msg=msg.toLowerCase();
+    var title=msg.split("movie")[1].trim();
+    context.simplehttp.makeGet ("http://www.omdbapi.com/?t="+title+"&apikey=6637725e", {}, function (context, event) {
+        var res = JSON.parse(event.getresp);
+        var p={
+            "type": "catalogue",
+              "imageaspectratio": "square",
+              "msgid": "cat_212",
+            "items":[{
+                "title":res.Title,
+                 "subtitle":"\nGenre: "+res.Genre+"\nDirector: "+res.Director+"\nImdbRating: "+res.imdbRating,
+                "imgurl":res.Poster
+}]
+            };
+            context.sendResponse(JSON.stringify(p));
+    });
+}
+else if(msg.toLowerCase().includes("thanks")){
+    
+      context.sendResponse("Its been my pleasure to help you!Have a great day");
+}
+else
+{
+    var totalvalue = context.simpledb.roomleveldata.totalcount;
+     var qs=context.simpledb.roomleveldata.count;
+
+  
+  if (!totalvalue)
+      context.simpledb.roomleveldata.totalcount= 0;
+
+if (!qs)
+      context.simpledb.roomleveldata.count= 0;
+      
+var cat=9;
+
+if(msg.toLowerCase().includes("general knowledge")){
+    cat=9;
+}
+else if(msg.toLowerCase().includes("sports"))
+{
+    cat=21;
+}
+else if(msg.toLowerCase().includes("film"))
+{
+    cat=11;
+}
+else if(msg.toLowerCase().includes("television"))
+{
+    cat=14;
+}
+else if(msg.toLowerCase().includes("music"))
+{
+    cat=12;
+}
+else if(msg.toLowerCase().includes("computers"))
+{
+    cat=18;
+}
+
+          
+context.simplehttp.makeGet ("https://opentdb.com/api.php?amount=20&category="+cat+"&difficulty=easy&type=boolean", {}, function (context, event) {
+       var res= JSON.parse(event.getresp);
+       var str=res.results[(Math.floor(Math.random() * 10)+1)].question;
+        str=str.replace(/.&quot;/gi,"");
+       str=str.replace(/quot/gi,"");
+          str=str.replace(/[&#039;]/g,"");
+          
+    var payload = {
+                    "type": "poll",
+                     "question":str,
+                    "msgid": "poll_212"
+                  }
+                  var t="True";
+           if(event.message=="No")
+           t="False";
+         
+           
+        
+if (t == res.results[(Math.floor(Math.random() * 10)+1)].correct_answer){
+  context.simpledb.roomleveldata.totalcount = totalvalue+1;
+
+
+    
+}
+
+if(context.simpledb.roomleveldata.count>=5)
+{
+ 
+ var score= context.simpledb.roomleveldata.totalcount;
+ context.simpledb.roomleveldata.totalcount= 0;
+ context.simpledb.roomleveldata.count= 0;
+    context.sendResponse("Congrats you scored "+  score+" / "+"5.Keep playing for fun");      
+   
+}
+else
+{
+context.simpledb.roomleveldata.count= qs+1;      
+
+context.sendResponse(JSON.stringify(payload));
+}
+                  
+    
+     });
+ 
+      
+  
+     
+     
+     
+}
+}
+
+    
+    
+    
+
+/** Functions declared below are required **/
+function EventHandler(context, event) {
+  
+}
+
+function HttpResponseHandler(context, event) {
+ 
+}
+
+function DbGetHandler(context, event) {
+    
+}
+
+function DbPutHandler(context, event) {
+   
+}
+
+
+//###### 
+//Auto generated code from devbox
+//######
+ 
+exports.onMessage = MessageHandler;
+exports.onEvent = EventHandler;
+exports.onHttpResponse = HttpResponseHandler;
+exports.onDbGet = DbGetHandler;
+exports.onDbPut = DbPutHandler;
+if(typeof LocationHandler == 'function'){exports.onLocation = LocationHandler;}
+if(typeof  HttpEndpointHandler == 'function'){exports.onHttpEndpoint = HttpEndpointHandler;}
